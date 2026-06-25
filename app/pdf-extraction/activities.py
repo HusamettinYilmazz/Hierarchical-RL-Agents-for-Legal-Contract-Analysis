@@ -34,6 +34,14 @@ class ExtractMarkdownInput:
 class ExtractMarkdownOutput:
     markdown_text: str
 
+@dataclass
+class UploadMarkdownInput:
+    markdown_text: str
+    original_s3_path: str
+
+@dataclass
+class UploadMarkdownOutput:
+    output_s3_path: str
 
 @activity.defn
 def download_pdf(params: DownloadPdfInput):
@@ -61,3 +69,23 @@ def extract_markdown(params: ExtractMarkdownInput):
 
     activity.logger.info(f"Extraction completed: {len(markdown_text)} characters extracted")
     return ExtractMarkdownOutput(markdown_text=markdown_text)
+
+@activity.defn
+def upload_markdown(params: UploadMarkdownInput):
+    bucket, key = parse_s3_path(params.original_s3_path)
+    md_key = key.replace(".pdf", ".md")
+
+    activity.logger.info(f"Uploading markdown to s3://{bucket}/{md_key}")
+    s3_client = get_s3_client()
+
+    s3_client.put_object(
+        Bucket=bucket,
+        Key=md_key,
+        Body=params.markdown_text.encode("utf-8", errors="ignore"),
+        ContentType="text/markdown"
+    )
+
+    output_path = f"s3://{bucket}/{md_key}"
+    activity.logger.info(f"Uploading completed: {output_path}")
+
+    return UploadMarkdownOutput(output_s3_path=output_path)

@@ -37,6 +37,13 @@ class ProcessPdfPipelineInput:
 class ProcessPdfPipelineOutput:
     output_s3_path: str
 
+
+DEFAULT_RETRY_POLICY = RetryPolicy(
+    initial_interval=timedelta(seconds=3),
+    backoff_coefficient= 2.0,
+    maximum_interval=timedelta(seconds=30),
+    maximum_attempts=5,
+)
 @workflow.defn
 class ProcessPdfPipeline:
 
@@ -45,21 +52,24 @@ class ProcessPdfPipeline:
         workflow.logger.info(f"Starting pipeline for: {params.s3_file_path}")
 
         temp_local_path = await workflow.execute_activity(
-            download_pdf,
-            DownloadPdfInput(s3_path=params.s3_file_path),
-            
+            activity=download_pdf,
+            args=DownloadPdfInput(s3_path=params.s3_file_path),
+            start_to_close_timeout=timedelta(minutes=5),
+            retry_policy=DEFAULT_RETRY_POLICY,
         )
 
         markdown_text = await workflow.execute_activity(
-            extract_markdown,
-            ExtractMarkdownInput(file_path=temp_local_path),
-
+            activity=extract_markdown,
+            args=ExtractMarkdownInput(file_path=temp_local_path),
+            start_to_close_timeout=timedelta(minutes=10),
+            retry_policy=DEFAULT_RETRY_POLICY,
         )
 
         output_s3_path = await workflow.execute_activity(
-            upload_markdown,
-            UploadMarkdownInput(markdown_text=markdown_text),
-
+            activity=upload_markdown,
+            arg=UploadMarkdownInput(markdown_text=markdown_text),
+            start_to_close_timeout=timedelta(minutes=5),
+            retry_policy=DEFAULT_RETRY_POLICY,
         )
 
         os.remove(temp_local_path)

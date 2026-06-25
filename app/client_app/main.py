@@ -27,6 +27,8 @@ class ProcessPdfExecuteResponse(BaseModel):
     workflow_id: str
     results: dict
 
+class ProcessPdfStartResponse(BaseModel):
+    workflow_id: str
 
 async def get_temporal_client() -> Client:
     return await Client.connect(
@@ -61,6 +63,44 @@ async def process_pdf(request: ProcessPdfRequest):
         workflow_id=workflow_id,
         results=results
     )
+
+@app.post("/process-pdf/start", response_model=ProcessPdfStartResponse)
+async def process_pdf(request: ProcessPdfRequest):
+
+    workflow_id = f"pdf-pipeline-{uuid.uuid4()}"
+
+    temp_client = await get_temporal_client()
+
+    results = await temp_client.start_workflow(
+        workflow="ProcessPdfPipeline",
+        args=[
+            {
+                "s3_file_path": request.s3_file_path,
+            }
+        ],
+        id=workflow_id,
+        task_queue=TEMPORAL_PDF_PROCESS_TASK_QUEUE,
+        result_type=dict,
+    )
+
+    return ProcessPdfStartResponse(
+        workflow_id=workflow_id
+    )
+
+@app.get("/process-pdf/status/{workflow_id}")
+async def get_workflow_status(workflow_id: str):
+
+    client = await get_temporal_client()
+    
+    handle = client.get_workflow_handle(workflow_id)
+    desc = await handle.describe()
+
+    workflow_status = desc.status
+
+    return {
+        "workflow_id": workflow_id,
+        "workflow_status": workflow_status.name
+    }
 
 
 

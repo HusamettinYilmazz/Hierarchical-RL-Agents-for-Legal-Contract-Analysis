@@ -20,7 +20,7 @@ TEMP_DIR=os.environ['TEMP_DIR']
 
 @dataclass
 class DownloadPdfInput:
-    s3_path: str
+    s3_file_path: str
 
 @dataclass
 class DownloadPdfOutput:
@@ -45,7 +45,7 @@ class UploadMarkdownOutput:
 
 @activity.defn
 async def download_pdf(params: DownloadPdfInput) -> DownloadPdfOutput:
-    bucket, key = parse_s3_path(s3_path=params.s3_path)
+    bucket, key = parse_s3_path(s3_path=params.s3_file_path)
     file_name = Path(key).name
     local_path = str(Path(TEMP_DIR) / file_name)
 

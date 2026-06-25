@@ -51,27 +51,28 @@ class ProcessPdfPipeline:
     async def run(self, params: ProcessPdfPipelineInput) -> ProcessPdfPipelineOutput:
         workflow.logger.info(f"Starting pipeline for: {params.s3_file_path}")
 
-        temp_local_path = await workflow.execute_activity(
+        temp_local_path_obj = await workflow.execute_activity(
             activity=download_pdf,
-            args=DownloadPdfInput(s3_file_path=params.s3_file_path),
+            args=[DownloadPdfInput(s3_file_path=params.s3_file_path)],
             start_to_close_timeout=timedelta(minutes=2),
             retry_policy=DEFAULT_RETRY_POLICY,
         )
 
-        markdown_text = await workflow.execute_activity(
+        markdown_text_obj = await workflow.execute_activity(
             activity=extract_markdown,
-            args=ExtractMarkdownInput(file_path=temp_local_path),
+            args=[ExtractMarkdownInput(file_path=temp_local_path_obj.file_local_path)],
             start_to_close_timeout=timedelta(minutes=5),
             retry_policy=DEFAULT_RETRY_POLICY,
         )
 
-        output_s3_path = await workflow.execute_activity(
+        output_s3_path_obj = await workflow.execute_activity(
             activity=upload_markdown,
-            arg=UploadMarkdownInput(markdown_text=markdown_text),
+            arg=UploadMarkdownInput(markdown_text=markdown_text_obj.markdown_text,
+                                     original_s3_path=params.s3_file_path),
             start_to_close_timeout=timedelta(minutes=2),
             retry_policy=DEFAULT_RETRY_POLICY,
         )
 
-        os.remove(temp_local_path)
+        # os.remove(temp_local_path_obj.file_local_path)
         workflow.logger.info(f"Pipeline completed.")
-        return ProcessPdfPipelineOutput(output_s3_path=output_s3_path)
+        return ProcessPdfPipelineOutput(output_s3_path=output_s3_path_obj.output_s3_path)

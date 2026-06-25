@@ -44,7 +44,7 @@ class UploadMarkdownOutput:
     output_s3_path: str
 
 @activity.defn
-def download_pdf(params: DownloadPdfInput):
+async def download_pdf(params: DownloadPdfInput) -> DownloadPdfOutput:
     bucket, key = parse_s3_path(s3_path=params.s3_path)
     file_name = Path(key).name
     local_path = str(Path(TEMP_DIR) / file_name)
@@ -63,7 +63,7 @@ def download_pdf(params: DownloadPdfInput):
     return DownloadPdfOutput(file_local_path=local_path)
 
 @activity.defn
-def extract_markdown(params: ExtractMarkdownInput):
+async def extract_markdown(params: ExtractMarkdownInput) -> ExtractMarkdownOutput:
     activity.logger.info(f"Extracting text from {params.file_path}")
     markdown_text = pymupdf4llm.to_markdown(params.file_path)
 
@@ -71,7 +71,7 @@ def extract_markdown(params: ExtractMarkdownInput):
     return ExtractMarkdownOutput(markdown_text=markdown_text)
 
 @activity.defn
-def upload_markdown(params: UploadMarkdownInput):
+async def upload_markdown(params: UploadMarkdownInput)-> UploadMarkdownOutput:
     bucket, key = parse_s3_path(params.original_s3_path)
     md_key = key.replace(".pdf", ".md")
 

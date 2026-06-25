@@ -53,22 +53,22 @@ class ProcessPdfPipeline:
 
         temp_local_path = await workflow.execute_activity(
             activity=download_pdf,
-            args=DownloadPdfInput(s3_path=params.s3_file_path),
-            start_to_close_timeout=timedelta(minutes=5),
+            args=DownloadPdfInput(s3_file_path=params.s3_file_path),
+            start_to_close_timeout=timedelta(minutes=2),
             retry_policy=DEFAULT_RETRY_POLICY,
         )
 
         markdown_text = await workflow.execute_activity(
             activity=extract_markdown,
             args=ExtractMarkdownInput(file_path=temp_local_path),
-            start_to_close_timeout=timedelta(minutes=10),
+            start_to_close_timeout=timedelta(minutes=5),
             retry_policy=DEFAULT_RETRY_POLICY,
         )
 
         output_s3_path = await workflow.execute_activity(
             activity=upload_markdown,
             arg=UploadMarkdownInput(markdown_text=markdown_text),
-            start_to_close_timeout=timedelta(minutes=5),
+            start_to_close_timeout=timedelta(minutes=2),
             retry_policy=DEFAULT_RETRY_POLICY,
         )
 

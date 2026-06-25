@@ -75,9 +75,3 @@ class ProcessPdfPipeline:
         os.remove(temp_local_path)
         workflow.logger.info(f"Pipeline completed.")
         return ProcessPdfPipelineOutput(output_s3_path=output_s3_path)
-
-
-if __name__ == "__main__":
-
-    input_params = ProcessPdfPipelineInput(s3_file_path=sys.argv[1])
-    # _ = process_pdf(params=input_params)

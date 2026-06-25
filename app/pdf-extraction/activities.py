@@ -26,6 +26,14 @@ class DownloadPdfInput:
 class DownloadPdfOutput:
     file_local_path: str
 
+@dataclass
+class ExtractMarkdownInput:
+    file_path: str
+
+@dataclass
+class ExtractMarkdownOutput:
+    markdown_text: str
+
 
 @activity.defn
 def download_pdf(params: DownloadPdfInput):
@@ -45,4 +53,11 @@ def download_pdf(params: DownloadPdfInput):
 
     activity.logger.info(f"Downloading is completed: {local_path}")
     return DownloadPdfOutput(file_local_path=local_path)
- 
+
+@activity.defn
+def extract_markdown(params: ExtractMarkdownInput):
+    activity.logger.info(f"Extracting text from {params.file_path}")
+    markdown_text = pymupdf4llm.to_markdown(params.file_path)
+
+    activity.logger.info(f"Extraction completed: {len(markdown_text)} characters extracted")
+    return ExtractMarkdownOutput(markdown_text=markdown_text)

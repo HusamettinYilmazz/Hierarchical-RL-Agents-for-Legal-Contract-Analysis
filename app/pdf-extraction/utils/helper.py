@@ -15,7 +15,7 @@ S3_BUCKET=os.environ['S3_BUCKET']
 TEMP_DIR=os.environ['TEMP_DIR']
 
 
-def get_s3_client():
+def get_s3_client() -> boto3.client:
 
     return boto3.client(
         service_name="s3",

@@ -195,6 +195,23 @@ async def assign_reviewer(workflow_id: str, request: AssignRequest):
     return {"status": "ok", 
             "message": f"Reviewer '{request.name}' assigned."}
 
+@app.post("/contract-review/{workflow_id}/revise")
+async def submit_revise(workflow_id: str, request: ReviseRequest):
+
+    client = await get_temporal_client()
+    handle = client.get_workflow_handle(workflow_id)
+
+    result = await handle.execute_update(
+        "submit_decision", args=["revise", request.feedback]
+    )
+
+    return {"ok": True, "message": result}
+
+
+
+
+
+
 
 
 """

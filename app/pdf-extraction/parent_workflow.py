@@ -55,7 +55,7 @@ class ContractReviewWorkflow:
         return {
             "status":           self.status,
             "pdfs_processed":   len(self._summaries),
-            "report_preview":   self._report[:500] if self._report else None,
+            "report_preview":   json.dumps(self._report, ensure_ascii=False)[:500],
             "approved_by":      self._approved_by
         }
     
@@ -160,12 +160,13 @@ class ContractReviewWorkflow:
 
             self._review_decision = None
 
-            timed_out = not await workflow.wait_condition(
-                lambda: self._review_decision is not None,
-                timeout= timedelta(minutes=2),
-            )
+            try:
+                await workflow.wait_condition(
+                    lambda: self._review_decision is not None,
+                    timeout= timedelta(minutes=2),
+                )
 
-            if timed_out:
+            except asyncio.TimeoutError:
                 workflow.logger.warning(f"Review timed out -- auto-completing")
                 break
 

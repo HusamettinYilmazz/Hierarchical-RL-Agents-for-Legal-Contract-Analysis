@@ -21,7 +21,7 @@ from utils.prompt import _SUMMARY_PROMPT
 class SummarizePDFInput:
     s3_file_path: str
 
-@dataclass
+@dataclass(frozen=True)
 class SummarizePDFOutput:
     s3_file_path: str
     summary: str

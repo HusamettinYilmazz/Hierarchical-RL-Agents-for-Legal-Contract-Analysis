@@ -10,7 +10,7 @@ from temporalio.common import RetryPolicy
 from temporalio.exceptions import ApplicationError
 from temporalio.workflow import ParentClosePolicy
 
-from utils.prompt import _SYNTHESIS_PROMPT
+from utils.prompt import _SYNTHESIS_PROMPT, _REVISION_PROMPT
 
 with workflow.unsafe.imports_passed_through():
     from activities import (
@@ -68,10 +68,7 @@ class ContractReviewWorkflow:
         )
 
         raw_results = await asyncio.gather(
-            *[
-                h.result()
-                for h in handles            
-            ],
+            *handles,
             return_exceptions=True,   
         )
 
@@ -96,7 +93,7 @@ class ContractReviewWorkflow:
             f"**Summary** {summary['summary']}\n"
             f"**Risks** {summary['risks']}\n"
 
-            for i, summary in self._summaries
+            for i, summary in enumerate(self._summaries)
         ])
 
         llm_prompt = _SYNTHESIS_PROMPT.format(
@@ -114,3 +111,8 @@ class ContractReviewWorkflow:
 
         self._report = json_repair.loads(llm_result.content)
 
+        return ContractReviewOutput(
+            report=self._report,
+            sources=params.s3_file_paths,
+            approved_by=""
+        )

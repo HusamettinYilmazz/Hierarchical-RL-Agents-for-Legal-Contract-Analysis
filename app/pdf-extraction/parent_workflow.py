@@ -50,6 +50,23 @@ class ContractReviewWorkflow:
         self._review_feedback: str = ""
         self._approved_by: str = ""
 
+    @workflow.query
+    def get_status(self) -> dict:
+        return {
+            "status":           self.status,
+            "pdfs_processed":   len(self._summaries),
+            "report_preview":   self._report[:500] if self._report else None,
+            "approved_by":      self._approved_by
+        }
+    
+    @workflow.query
+    def get_report(self) -> dict:
+        return {
+            "status":           self.status,
+            "report":           self._report,
+            "approved_by":      self._approved_by,
+            "sources":          [s["s3_file_path"] for s in self._summaries],
+        }
 
     @workflow.signal
     async def assign_reviewer(self, name: str) -> None:

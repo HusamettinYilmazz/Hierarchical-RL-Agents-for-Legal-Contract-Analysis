@@ -208,6 +208,18 @@ async def submit_revise(workflow_id: str, request: ReviseRequest):
     return {"ok": True, "message": result}
 
 
+@app.get("/contract-review/{workflow_id}/approve")
+async def submit_approve(workflow_id: str):
+
+    client = await get_temporal_client()
+    handle = client.get_workflow_handle(workflow_id)
+
+    result = await handle.execute_update(
+        "submit_decision", args=["approve", ""]
+    )
+
+    return {"ok": True, "message": result}
+
 
 
 

@@ -2,9 +2,14 @@
 import os
 from pathlib import Path
 from dataclasses import dataclass
+import tempfile
+import math
 
 from temporalio import activity
 import pymupdf4llm
+import fitz
+
+from openai import OpenAI
 
 from utils.helper import parse_s3_path, get_s3_client
 
@@ -29,10 +34,12 @@ class DownloadPdfOutput:
 @dataclass
 class ExtractMarkdownInput:
     file_path: str
+    batch_size: int = 2
 
 @dataclass
 class ExtractMarkdownOutput:
     markdown_text: str
+    page_count: int
 
 @dataclass
 class UploadMarkdownInput:
@@ -65,10 +72,30 @@ async def download_pdf(params: DownloadPdfInput) -> DownloadPdfOutput:
 @activity.defn
 async def extract_markdown(params: ExtractMarkdownInput) -> ExtractMarkdownOutput:
     activity.logger.info(f"Extracting text from {params.file_path}")
-    markdown_text = pymupdf4llm.to_markdown(params.file_path)
+    
+    doc = fitz.open(params.file_path)
+    page_count = doc.page_count
 
-    activity.logger.info(f"Extraction completed: {len(markdown_text)} characters extracted")
-    return ExtractMarkdownOutput(markdown_text=markdown_text)
+    all_text_chunks = []
+    total_char_num = 0
+    num_batches = math.ceil(page_count / params.batch_size)
+    for batch_idx in range(num_batches):
+        start_page = batch_idx * params.batch_size
+        end_page = min(start_page + params.batch_size, page_count)
+        
+        batch_md = pymupdf4llm.to_markdown(
+            params.file_path,
+            pages=list(range(start_page, end_page))
+        )
+        all_text_chunks.append(batch_md)
+        total_char_num += len(batch_md)
+
+    markdown_text = "\n".join(all_text_chunks)
+    activity.logger.info(f"Extraction completed: on total {page_count} pages and {total_char_num} characters extracted")
+    return ExtractMarkdownOutput(
+        markdown_text=markdown_text,
+        page_count=page_count
+        )
 
 @activity.defn
 async def upload_markdown(params: UploadMarkdownInput)-> UploadMarkdownOutput:

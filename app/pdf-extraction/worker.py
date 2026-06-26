@@ -9,11 +9,13 @@ from temporalio.worker import Worker
 from dotenv import load_dotenv
 load_dotenv()
 
-from workflow_process_pdf import ProcessPdfPipeline
+from parent_workflow import ContractReviewWorkflow
+from child_workflow import SummarizePDF
 from activities import (
     download_pdf, DownloadPdfInput,
     extract_markdown, ExtractMarkdownInput,
     upload_markdown, UploadMarkdownInput,
+    call_llm, CallLLMInput,
 )
 
 TEMPORAL_HOST=os.environ['TEMPORAL_HOST']
@@ -27,14 +29,14 @@ async def main():
         namespace=TEMPORAL_NAMESPACE,
     )
 
-    worker_pdf_process = Worker(
+    worker = Worker(
         client=temporal_client,
         task_queue=TEMPORAL_PDF_PROCESS_TASK_QUEUE,
-        activities=[download_pdf, extract_markdown, upload_markdown],
-        workflows=[ProcessPdfPipeline],
+        activities=[download_pdf, extract_markdown, call_llm],
+        workflows=[ContractReviewWorkflow, SummarizePDF],
     )
     print(f"Worker started and pooling task queue: {TEMPORAL_PDF_PROCESS_TASK_QUEUE}")
-    await worker_pdf_process.run()
+    await worker.run()
 
 
 

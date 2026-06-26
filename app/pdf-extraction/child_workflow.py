@@ -34,7 +34,7 @@ DEFAULT_RETRY_POLICY = RetryPolicy(
     maximum_attempts=3
 )
 
-workflow.defn
+@workflow.defn
 class SummarizePDF:
     
     @workflow.run

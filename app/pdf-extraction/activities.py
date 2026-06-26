@@ -58,7 +58,6 @@ class UploadMarkdownOutput:
 @dataclass
 class CallLLMInput:
     prompt: str
-    llm_model: str
 
 @dataclass
 class CallLLMOutput:

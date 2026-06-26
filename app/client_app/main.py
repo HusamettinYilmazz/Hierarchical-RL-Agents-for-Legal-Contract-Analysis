@@ -184,6 +184,18 @@ async def get_review_report(workflow_id: str):
         "workflow_report": workflow_report,
     }
 
+@app.post("/contract-review/{workflow_id}/assign")
+async def assign_reviewer(workflow_id: str, request: AssignRequest):
+
+    client = await get_temporal_client()
+    handle = client.get_workflow_handle(workflow_id)
+
+    await handle.signal("assign_reviewer", request.name)
+
+    return {"status": "ok", 
+            "message": f"Reviewer '{request.name}' assigned."}
+
+
 
 """
 uvicorn main:app --reload --port 5000

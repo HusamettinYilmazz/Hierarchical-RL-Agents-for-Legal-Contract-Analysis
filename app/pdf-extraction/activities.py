@@ -61,7 +61,7 @@ class CallLLMInput:
 
 @dataclass
 class CallLLMOutput:
-    llm_response: str
+    content: str
 
 @activity.defn
 async def download_pdf(params: DownloadPdfInput) -> DownloadPdfOutput:

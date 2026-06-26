@@ -52,6 +52,12 @@ class UploadMarkdownOutput:
 
 @activity.defn
 async def download_pdf(params: DownloadPdfInput) -> DownloadPdfOutput:
+    activity.heartbeat({
+            "stage": "Downloading",
+            "status": "Starting",
+            "working_file": params.s3_file_path,
+        })
+    
     bucket, key = parse_s3_path(s3_path=params.s3_file_path)
     file_name = Path(key).name
     local_path = str(Path(TEMP_DIR) / file_name)
@@ -67,6 +73,12 @@ async def download_pdf(params: DownloadPdfInput) -> DownloadPdfOutput:
     )
 
     activity.logger.info(f"Downloading is completed: {local_path}")
+    activity.heartbeat({
+            "stage": "Downloading",
+            "status": "Finished",
+            "working_file": params.s3_file_path,
+        })
+    
     return DownloadPdfOutput(file_local_path=local_path)
 
 @activity.defn
@@ -79,6 +91,15 @@ async def extract_markdown(params: ExtractMarkdownInput) -> ExtractMarkdownOutpu
     all_text_chunks = []
     total_char_num = 0
     num_batches = math.ceil(page_count / params.batch_size)
+
+    activity.heartbeat({
+            "stage": "Extracting",
+            "status": "Starting",
+            "working_file": params.file_path,
+            "extracted_pages": f"{0}/{page_count}",
+            "extracted_chars": total_char_num
+        })
+    
     for batch_idx in range(num_batches):
         start_page = batch_idx * params.batch_size
         end_page = min(start_page + params.batch_size, page_count)
@@ -90,8 +111,23 @@ async def extract_markdown(params: ExtractMarkdownInput) -> ExtractMarkdownOutpu
         all_text_chunks.append(batch_md)
         total_char_num += len(batch_md)
 
+        activity.heartbeat({
+            "stage": "Extracting",
+            "status": "In-Progress",
+            "working_file": params.file_path,
+            "extracted_pages": f"{end_page}/{page_count}",
+            "extracted_chars": total_char_num
+        })
+
     markdown_text = "\n".join(all_text_chunks)
     activity.logger.info(f"Extraction completed: on total {page_count} pages and {total_char_num} characters extracted")
+    activity.heartbeat({
+            "stage": "Extracting",
+            "status": "Finished",
+            "working_file": params.file_path,
+            "extracted_pages": f"{end_page}/{page_count}",
+            "extracted_chars": total_char_num
+        })
     return ExtractMarkdownOutput(
         markdown_text=markdown_text,
         page_count=page_count
@@ -101,18 +137,27 @@ async def extract_markdown(params: ExtractMarkdownInput) -> ExtractMarkdownOutpu
 async def upload_markdown(params: UploadMarkdownInput)-> UploadMarkdownOutput:
     bucket, key = parse_s3_path(params.original_s3_path)
     md_key = key.replace(".pdf", ".md")
+    uploading_path = f"s3://{bucket}/{md_key}"
 
-    activity.logger.info(f"Uploading markdown to s3://{bucket}/{md_key}")
+    activity.logger.info(f"Uploading markdown to {uploading_path}")
+    activity.heartbeat({
+            "stage": "Uploading",
+            "status": "Starting",
+            "working_file": uploading_path,
+        })
+    
     s3_client = get_s3_client()
-
     s3_client.put_object(
         Bucket=bucket,
         Key=md_key,
         Body=params.markdown_text.encode("utf-8", errors="ignore"),
         ContentType="text/markdown"
     )
-
-    output_path = f"s3://{bucket}/{md_key}"
-    activity.logger.info(f"Uploading completed: {output_path}")
-
-    return UploadMarkdownOutput(output_s3_path=output_path)
+    activity.logger.info(f"Uploading completed: {uploading_path}")
+    activity.heartbeat({
+            "stage": "Uploading",
+            "status": "Finished",
+            "working_file": uploading_path,
+        })
+    
+    return UploadMarkdownOutput(output_s3_path=uploading_path)

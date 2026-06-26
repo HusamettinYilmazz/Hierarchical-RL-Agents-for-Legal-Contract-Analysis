@@ -48,3 +48,28 @@ _SYNTHESIS_PROMPT = textwrap.dedent("""\
     ```json 
     """)
 
+_REVISION_PROMPT = textwrap.dedent("""\
+    You are a senior legal analyst. A reviewer has requested changes to the risk report below.
+
+    Rewrite the report in full, incorporating the reviewer's feedback.
+    Preserve the same JSON schema as the current report.
+
+    --- CURRENT REPORT ---
+    {report}
+
+    --- REVIEWER FEEDBACK ---
+    {feedback}
+
+    Return ONLY a JSON object matching this exact schema - no markdown, no code block:
+    {{
+      "overall_risk_level": "High / Medium / Low - one sentence justifying the rating.",
+      "top_cross_contract_risks": "List the top 3 risks that span or compound across contracts. For each risk, name which contracts are affected and explain why it matters.",
+      "recommended_actions": "A numbered list of concrete steps the legal team should take."
+    }}
+
+    Requirements:
+    - top_cross_contract_risks must include exactly 3 risks.
+    - recommended_actions must be a numbered list.
+    - Apply the reviewer feedback to all relevant fields.
+    - Do not include any text outside the JSON object.
+    - Do not include extra keys.""")

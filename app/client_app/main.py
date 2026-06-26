@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from temporalio.client import Client
+from temporalio.client import WorkflowExecutionStatus as WES
 
 
 from dotenv import load_dotenv
@@ -33,6 +34,12 @@ class ProcessPdfStartResponse(BaseModel):
 class StartReviewRequest(BaseModel):
     s3_file_paths: list[str]
     max_revisions: int = 2
+
+class AssignRequest(BaseModel):
+    bra: str
+
+class ReviseRequest(BaseModel):
+    bra: str
 
 async def get_temporal_client() -> Client:
     return await Client.connect(
@@ -132,6 +139,29 @@ async def start_contract_review(request: StartReviewRequest):
     )
 
     return {"workflow_id": workflow_id}
+
+@app.get("/contract-review/{workflow_id}/status")
+async def get_review_status(workflow_id: str):
+
+    """Temporal execution status + brief workflow state (Query)."""
+    
+    client = await get_temporal_client()
+    handle = client.get_workflow_handle(workflow_id)
+    desc = await handle.describe()
+
+    workflow_state = None
+    if desc.status == WES.RUNNING:
+        try:
+            workflow_state = await handle.query("get_status", result_type=dict)
+        except Exception as e:
+            workflow_state = {"error": str(e)}
+    
+    return {
+        "workflow_id": workflow_id,
+        "execution_status": desc.status.name,
+        "workflow_state": workflow_state,
+    }
+
 
 """
 uvicorn main:app --reload --port 5000

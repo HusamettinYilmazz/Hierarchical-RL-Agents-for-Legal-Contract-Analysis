@@ -36,10 +36,10 @@ class StartReviewRequest(BaseModel):
     max_revisions: int = 2
 
 class AssignRequest(BaseModel):
-    bra: str
+    name: str
 
 class ReviseRequest(BaseModel):
-    bra: str
+    feedback: str
 
 async def get_temporal_client() -> Client:
     return await Client.connect(

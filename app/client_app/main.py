@@ -162,6 +162,28 @@ async def get_review_status(workflow_id: str):
         "workflow_state": workflow_state,
     }
 
+@app.get("/contract-review/{workflow_id}/report")
+async def get_review_report(workflow_id: str):
+
+    """Temporal execution report + brief workflow state (Query)."""
+    
+    client = await get_temporal_client()
+    handle = client.get_workflow_handle(workflow_id)
+    desc = await handle.describe()
+
+    workflow_report = None
+    if desc.status == WES.RUNNING:
+        try:
+            workflow_report = await handle.query("get_report", result_type=dict)
+        except Exception as e:
+            workflow_report = {"error": str(e)}
+    
+    return {
+        "workflow_id": workflow_id,
+        "execution_report": desc.status.name,
+        "workflow_report": workflow_report,
+    }
+
 
 """
 uvicorn main:app --reload --port 5000

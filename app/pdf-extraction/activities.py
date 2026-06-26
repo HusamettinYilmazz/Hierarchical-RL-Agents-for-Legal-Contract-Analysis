@@ -23,6 +23,11 @@ AWS_S3_ENDPOINT_URL=os.environ['AWS_S3_ENDPOINT_URL']
 S3_BUCKET=os.environ['S3_BUCKET']
 TEMP_DIR=os.environ['TEMP_DIR']
 
+OPENROUTER_API_KEKY=os.environ['OPENROUTER_API_KEKY']
+OPENROUTER_MODEL=os.environ['OPENROUTER_MODEL']
+OPENROUTER_BASE_URL=os.environ['OPENROUTER_BASE_URL']
+MAX_TOKENS=os.environ['MAX_TOKENS']
+
 @dataclass
 class DownloadPdfInput:
     s3_file_path: str
@@ -49,6 +54,15 @@ class UploadMarkdownInput:
 @dataclass
 class UploadMarkdownOutput:
     output_s3_path: str
+
+@dataclass
+class CallLLMInput:
+    prompt: str
+    llm_model: str
+
+@dataclass
+class CallLLMOutput:
+    llm_response: str
 
 @activity.defn
 async def download_pdf(params: DownloadPdfInput) -> DownloadPdfOutput:
@@ -161,3 +175,31 @@ async def upload_markdown(params: UploadMarkdownInput)-> UploadMarkdownOutput:
         })
     
     return UploadMarkdownOutput(output_s3_path=uploading_path)
+
+@activity.defn
+async def call_llm(params: CallLLMInput) -> CallLLMOutput:
+    activity.logger.info(f"Calling LLM: {params.llm_model}")
+    activity.heartbeat({
+            "stage": "Calling-llm",
+            "status": "Starting",
+            "prompt_chars": len(params.prompt),
+        })
+    
+    llm_client = OpenAI(
+        api_key=OPENROUTER_API_KEKY,
+        base_url=OPENROUTER_BASE_URL,
+    )
+
+    response = llm_client.chat.completions.create(
+        model= OPENROUTER_MODEL,
+        messages=[{
+            "role": "user",
+            "content": params.prompt
+            }],
+        max_tokens=int(MAX_TOKENS),
+    )
+
+    content = response.choices[0].message.content
+
+    return CallLLMOutput(llm_response=content)
+    

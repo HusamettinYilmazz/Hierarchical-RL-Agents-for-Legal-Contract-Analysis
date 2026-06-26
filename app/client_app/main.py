@@ -30,6 +30,10 @@ class ProcessPdfExecuteResponse(BaseModel):
 class ProcessPdfStartResponse(BaseModel):
     workflow_id: str
 
+class StartReviewRequest(BaseModel):
+    s3_file_paths: list[str]
+    max_revisions: int = 2
+
 async def get_temporal_client() -> Client:
     return await Client.connect(
         target_host=TEMPORAL_HOST,
@@ -111,10 +115,29 @@ async def get_workflow_status(workflow_id: str):
         "workflow_result": result
     }
 
+@app.post("/contract-review/start", response_model=ProcessPdfStartResponse)
+async def start_contract_review(request: StartReviewRequest):
+    workflow_id = f"contract-review-{uuid.uuid4()}"
 
+    client = await get_temporal_client()
+
+    await client.start_workflow(
+        "ContractReviewWorkflow",
+        args=[{
+            "s3_file_paths": request.s3_file_paths,
+            "max_revisions": request.max_revisions
+        }],
+        id=workflow_id,
+        task_queue=TEMPORAL_PDF_PROCESS_TASK_QUEUE
+    )
+
+    return {"workflow_id": workflow_id}
 
 """
 uvicorn main:app --reload --port 5000
+
+### Process PDF
+
 curl -X POST http://localhost:5000/process-pdf/execute \
     -H "Content-Type: application/json" \
     -d '{"s3_file_path": "s3://temporal-dev/math_files/grade_4/math_g4_test.pdf"}'
@@ -122,4 +145,27 @@ curl -X POST http://localhost:5000/process-pdf/execute \
 curl -X POST http://localhost:5000/process-pdf/start \
     -H "Content-Type: application/json" \
     -d '{"s3_file_path": "s3://temporal-dev/math_files/grade_4/math_g4_test.pdf"}'    
+
+    
+### Contract Review
+
+curl -X POST http://localhost:5000/contract-review/start \
+    -H "Content-Type: application/json" \
+    -d '{
+    "s3_file_paths": ["s3://temporal-dev/math_files/grade_4/math_g4_test.pdf",
+         "s3://temporal-dev/math_files/grade_4/math_g4_test1.pdf",
+         "s3://temporal-dev/math_files/grade_4/math_g4_test2.pdf"
+        ]
+    }'    
+
+
+curl -X POST http://localhost:5000/contract-review/start \
+    -H "Content-Type: application/json" \
+    -d '{
+    "s3_file_paths": ["s3://temporal-dev/legal_documents/nda-innovate-consultpro.pdf",
+         "s3://temporal-dev/legal_documents/software-license-globalsoft.pdf",
+         "s3://temporal-dev/legal_documents/vendor-service-agreement.pdf"
+        ]
+    }'    
+ 
 """

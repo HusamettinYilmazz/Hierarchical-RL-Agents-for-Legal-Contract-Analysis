@@ -207,7 +207,6 @@ async def submit_revise(workflow_id: str, request: ReviseRequest):
 
     return {"ok": True, "message": result}
 
-
 @app.get("/contract-review/{workflow_id}/approve")
 async def submit_approve(workflow_id: str):
 

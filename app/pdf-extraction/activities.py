@@ -177,7 +177,7 @@ async def upload_markdown(params: UploadMarkdownInput)-> UploadMarkdownOutput:
 
 @activity.defn
 async def call_llm(params: CallLLMInput) -> CallLLMOutput:
-    activity.logger.info(f"Calling LLM: {params.llm_model}")
+    activity.logger.info(f"Calling LLM")
     activity.heartbeat({
             "stage": "Calling-llm",
             "status": "Starting",
@@ -200,5 +200,5 @@ async def call_llm(params: CallLLMInput) -> CallLLMOutput:
 
     content = response.choices[0].message.content
 
-    return CallLLMOutput(llm_response=content)
+    return CallLLMOutput(content=content)
     

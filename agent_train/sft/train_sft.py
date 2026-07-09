@@ -12,21 +12,6 @@ from dataset import create_dataset
 from utils import load_config, Config
 
 
-def formatting_func(example, tokenizer):
-    text = tokenizer.apply_chat_template(
-        example["messages"],
-        tokenize=False
-    )
-
-    tokens = tokenizer(
-        text,
-        truncation=True,
-        max_length=1024   # or 2048 if GPU  allows
-    )
-
-    return tokenizer.decode(tokens["input_ids"])
-
-
 def train(config: Config, checkpoint: str | None = None):
 
     dataset = create_dataset(json_path=config.data['dataset_path'])
@@ -34,6 +19,20 @@ def train(config: Config, checkpoint: str | None = None):
     tokenizer = AutoTokenizer.from_pretrained(config.model['model_name'])
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
+
+    def formatting_func(example):
+        text = tokenizer.apply_chat_template(
+            example["messages"],
+            tokenize=False
+        )
+
+        tokens = tokenizer(
+            text,
+            truncation=True,
+            max_length=1024   # or 2048 if GPU  allows
+        )
+
+        return tokenizer.decode(tokens["input_ids"])
 
     model = AutoModelForCausalLM.from_pretrained(
         config.model['model_name'],

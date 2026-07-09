@@ -12,7 +12,7 @@ from dataset import create_dataset
 from utils import load_config, Config
 
 
-def formatting_func(tokenizer, example):
+def formatting_func(example, tokenizer):
     text = tokenizer.apply_chat_template(
         example["messages"],
         tokenize=False

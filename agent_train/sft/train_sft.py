@@ -8,7 +8,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import LoraConfig
 from trl import SFTTrainer, SFTConfig
 
-from .dataset import create_dataset
+from dataset import create_dataset
 from utils import load_config, Config
 
 

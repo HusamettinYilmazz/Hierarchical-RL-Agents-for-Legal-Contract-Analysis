@@ -16,7 +16,7 @@ def train(config: Config, checkpoint: str | None = None):
 
     dataset = create_dataset(json_path=config.data['dataset_path'])
 
-    tokenizer = AutoTokenizer.from_pretrained(config.model['model_name'])
+    tokenizer = AutoTokenizer.from_pretrained(config.model['base_model_name'])
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -35,7 +35,7 @@ def train(config: Config, checkpoint: str | None = None):
         return tokenizer.decode(tokens["input_ids"])
 
     model = AutoModelForCausalLM.from_pretrained(
-        config.model['model_name'],
+        config.model['base_model_name'],
         device_map="auto"
     )
 

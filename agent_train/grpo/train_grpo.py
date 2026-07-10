@@ -8,11 +8,11 @@ from trl import GRPOConfig
 
 from reward import compute_reward
 
-MODEL_PATH = "./sft_model"
+MODEL_PATH = "/kaggle/input/models/husamsha/checkpoint-2614/pytorch/default/1/checkpoint-2614"
 
 dataset = load_dataset(
     "json",
-    data_files="data/processed/train.jsonl"
+    data_files="/kaggle/working/Hierarchical-RL-Agents-for-Legal-Contract-Analysis/agent_train/outputs/train.jsonl"
 )["train"]
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
@@ -38,7 +38,7 @@ def reward_func(completions, answer, **kwargs):
     return rewards
 
 config = GRPOConfig(
-    output_dir="./grpo_model",
+    output_dir="/kaggle/working/Hierarchical-RL-Agents-for-Legal-Contract-Analysis/agent_train/outputs/grpo_model/config",
     learning_rate=5e-6,
     per_device_train_batch_size=1,
     gradient_accumulation_steps=8,
@@ -55,4 +55,4 @@ trainer = GRPOTrainer(
 )
 
 trainer.train()
-trainer.save_model("./grpo_model")
+trainer.save_model("/kaggle/working/Hierarchical-RL-Agents-for-Legal-Contract-Analysis/agent_train/outputs/grpo_model")

@@ -1,3 +1,9 @@
+import os
+os.environ["WANDB_MODE"] = "disabled"
+import sys
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+
 from datasets import load_dataset
 
 from transformers import AutoTokenizer

@@ -14,7 +14,8 @@ data:
   
 
 model:
-  model_name: "Qwen/Qwen2.5-0.5B-Instruct"
+  base_model_name: "Qwen/Qwen2.5-0.5B-Instruct"
+  sft_model_path: "/kaggle/input/models/husamsha/checkpoint-2614/pytorch/default/1/checkpoint-2614"
 
 
 training:

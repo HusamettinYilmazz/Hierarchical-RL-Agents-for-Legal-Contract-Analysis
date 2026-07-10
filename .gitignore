@@ -222,3 +222,4 @@ __marimo__/
 .vscode
 app/pdf-extraction/assets
 agent_train/assets
+agent_train/outputs

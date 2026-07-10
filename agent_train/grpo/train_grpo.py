@@ -35,7 +35,7 @@ def train(config: Config, checkpoint: str | None = None):
     
     dataset = load_dataset(
         "json",
-        data_files= dataset_path
+        data_files= os.path.join(ROOT, config.data['output_path'], "train.jsonl")
     )["train"]
 
     tokenizer = AutoTokenizer.from_pretrained(config.model['sft_model_path'])
@@ -71,12 +71,12 @@ def train(config: Config, checkpoint: str | None = None):
 
     config = GRPOConfig(
         output_dir= os.path.join(ROOT, config.data['output_path']),
-        learning_rate= float(config.model['grpo_learning_rate']),
-        per_device_train_batch_size= config.model['grpo_per_device_train_batch_size'],
-        gradient_accumulation_steps= config.model['grpo_gradient_accumulation_steps'],
-        num_generations= config.model['grpo_num_generations'],
-        logging_steps= config.model['grpo_logging_steps'],
-        save_steps= config.model['grpo_save_steps'],
+        learning_rate= float(config.training['grpo_learning_rate']),
+        per_device_train_batch_size= config.training['grpo_per_device_train_batch_size'],
+        gradient_accumulation_steps= config.training['grpo_gradient_accumulation_steps'],
+        num_generations= config.training['grpo_num_generations'],
+        logging_steps= config.training['grpo_logging_steps'],
+        save_steps= config.training['grpo_save_steps'],
     )
 
     trainer = GRPOTrainer(

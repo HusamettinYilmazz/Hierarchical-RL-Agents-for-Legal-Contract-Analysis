@@ -4,6 +4,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
+from peft import PeftModel
 from datasets import load_dataset
 
 from transformers import AutoTokenizer
@@ -14,6 +15,11 @@ from trl import GRPOConfig
 
 from reward import compute_reward
 
+base_model = AutoModelForCausalLM.from_pretrained(
+    "Qwen/Qwen2.5-0.5B-Instruct",
+    torch_dtype="auto",
+)
+
 MODEL_PATH = "/kaggle/input/models/husamsha/checkpoint-2614/pytorch/default/1/checkpoint-2614"
 
 dataset = load_dataset(
@@ -23,9 +29,10 @@ dataset = load_dataset(
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
 
-model = AutoModelForCausalLM.from_pretrained(
+model = PeftModel.from_pretrained(
+    base_model,
     MODEL_PATH,
-    device_map="auto"
+    is_trainable=True,
 )
 
 def reward_func(completions, answer, **kwargs):

@@ -36,3 +36,10 @@ training:
   sft_learning_rate: 2e-5
   sft_logging_steps: 10
   sft_save_steps: 200
+
+  grpo_learning_rate: 5e-6
+  grpo_per_device_train_batch_size: 4
+  grpo_gradient_accumulation_steps: 8
+  grpo_num_generations: 4
+  grpo_logging_steps: 10
+  grpo_save_steps: 200

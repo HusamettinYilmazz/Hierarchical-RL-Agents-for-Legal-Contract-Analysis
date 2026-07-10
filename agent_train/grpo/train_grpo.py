@@ -4,6 +4,8 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
+from pathlib import Path
+
 from peft import PeftModel
 from datasets import load_dataset
 
@@ -15,6 +17,7 @@ from trl import GRPOConfig
 
 from reward import compute_reward
 from utils import load_config, Config
+from preprocessing.process_cuad import process_data
 
 def train(config: Config, checkpoint: str | None = None):
 
@@ -23,16 +26,22 @@ def train(config: Config, checkpoint: str | None = None):
         torch_dtype="auto",
     )
 
-    ## if the file found if not run preprocessing/process_cuda.py
+    dataset_path = Path(os.path.join(ROOT, config.data['output_path'], "train.jsonl"))
+    if not dataset_path.exists():
+        process_data(
+            config= config,
+            output_dir= os.path.join(ROOT, config.data['output_path'])
+        )
+    
     dataset = load_dataset(
         "json",
-        data_files="/kaggle/working/Hierarchical-RL-Agents-for-Legal-Contract-Analysis/agent_train/outputs/train.jsonl"
+        data_files= dataset_path
     )["train"]
 
     tokenizer = AutoTokenizer.from_pretrained(config.model['sft_model_path'])
 
     model = PeftModel.from_pretrained(
-        config.model['base_model_name'],
+        base_model,
         config.model['sft_model_path'],
         is_trainable=True,
     )
@@ -86,5 +95,5 @@ def train(config: Config, checkpoint: str | None = None):
     trainer.save_model(save_dir)
 
 if __name__ == "__main__":
-    config = load_config(os.path.join(ROOT, "configs/config.yml"))
+    config = load_config(os.path.join(ROOT, "configs", "config.yml"))
     train(config)

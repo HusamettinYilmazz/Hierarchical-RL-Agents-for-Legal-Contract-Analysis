@@ -14,69 +14,77 @@ from trl import GRPOTrainer
 from trl import GRPOConfig
 
 from reward import compute_reward
+from utils import load_config, Config
 
-base_model = AutoModelForCausalLM.from_pretrained(
-    "Qwen/Qwen2.5-0.5B-Instruct",
-    torch_dtype="auto",
-)
+def train(config: Config, checkpoint: str | None = None):
 
-MODEL_PATH = "/kaggle/input/models/husamsha/checkpoint-2614/pytorch/default/1/checkpoint-2614"
+    base_model = AutoModelForCausalLM.from_pretrained(
+        config.model['base_model_name'],
+        torch_dtype="auto",
+    )
 
-dataset = load_dataset(
-    "json",
-    data_files="/kaggle/working/Hierarchical-RL-Agents-for-Legal-Contract-Analysis/agent_train/outputs/train.jsonl"
-)["train"]
+    ## if the file found if not run preprocessing/process_cuda.py
+    dataset = load_dataset(
+        "json",
+        data_files="/kaggle/working/Hierarchical-RL-Agents-for-Legal-Contract-Analysis/agent_train/outputs/train.jsonl"
+    )["train"]
 
-tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+    tokenizer = AutoTokenizer.from_pretrained(config.model['sft_model_path'])
 
-model = PeftModel.from_pretrained(
-    base_model,
-    MODEL_PATH,
-    is_trainable=True,
-)
+    model = PeftModel.from_pretrained(
+        config.model['base_model_name'],
+        config.model['sft_model_path'],
+        is_trainable=True,
+    )
 
-def reward_func(completions, answer, **kwargs):
-    rewards = []
+    def reward_func(completions, answer, **kwargs):
+        rewards = []
 
-    # Make answer iterable
-    if isinstance(answer, str):
-        answers = [answer] * len(completions)
-    else:
-        answers = answer
-
-    for completion, gt in zip(completions, answers):
-
-        # Extract generated text if completion is in chat format
-        if isinstance(completion, str):
-            pred = completion
-        elif isinstance(completion, list):
-            # [{"role":"assistant","content":"..."}]
-            pred = completion[-1]["content"]
-        elif isinstance(completion, dict):
-            pred = completion.get("content", completion.get("text", ""))
+        if isinstance(answer, str):
+            answers = [answer] * len(completions)
         else:
-            pred = str(completion)
+            answers = answer
 
-        rewards.append(compute_reward(pred, gt))
+        for completion, gt in zip(completions, answers):
 
-    return rewards
+            if isinstance(completion, str):
+                pred = completion
+            elif isinstance(completion, list):
+                pred = completion[-1]["content"]
+            elif isinstance(completion, dict):
+                pred = completion.get("content", completion.get("text", ""))
+            else:
+                pred = str(completion)
 
-config = GRPOConfig(
-    output_dir="/kaggle/working/Hierarchical-RL-Agents-for-Legal-Contract-Analysis/agent_train/outputs/grpo_model/config",
-    learning_rate=5e-6,
-    per_device_train_batch_size=1,
-    gradient_accumulation_steps=8,
-    num_generations=4,
-    logging_steps=10,
-    save_steps=200,
-)
+            rewards.append(compute_reward(pred, gt))
 
-trainer = GRPOTrainer(
-    model=model,
-    reward_funcs=reward_func,
-    train_dataset=dataset,
-    args=config
-)
+        return rewards
 
-trainer.train()
-trainer.save_model("/kaggle/working/Hierarchical-RL-Agents-for-Legal-Contract-Analysis/agent_train/outputs/grpo_model")
+    config = GRPOConfig(
+        output_dir="/kaggle/working/Hierarchical-RL-Agents-for-Legal-Contract-Analysis/agent_train/outputs/grpo_model/config",
+        learning_rate=5e-6,
+        per_device_train_batch_size=4,
+        gradient_accumulation_steps=8,
+        num_generations=4,
+        logging_steps=10,
+        save_steps=200,
+    )
+
+    trainer = GRPOTrainer(
+        model=model,
+        reward_funcs=reward_func,
+        train_dataset=dataset,
+        args=config
+    )
+
+    trainer.train(
+        resume_from_checkpoint= checkpoint
+    )
+    
+    save_dir = os.path.join(ROOT, config.data['output_path'], "grpo_model")
+    os.makedirs(save_dir, exist_ok=True)
+    trainer.save_model(save_dir)
+
+if __name__ == "__main__":
+    config = load_config(os.path.join(ROOT, "configs/config.yml"))
+    train(config)

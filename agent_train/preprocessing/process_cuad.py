@@ -1,10 +1,11 @@
 import os
 
+from pathlib import Path
 import json
 from utils import Config
 
 def process_data(config: Config, output_dir):
-
+    output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     with open(config.data['dataset_path'], "r") as f:

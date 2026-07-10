@@ -29,17 +29,28 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 
 def reward_func(completions, answer, **kwargs):
-
     rewards = []
 
-    for completion in completions:
+    # Make answer iterable
+    if isinstance(answer, str):
+        answers = [answer] * len(completions)
+    else:
+        answers = answer
 
-        rewards.append(
-            compute_reward(
-                completion,
-                answer
-            )
-        )
+    for completion, gt in zip(completions, answers):
+
+        # Extract generated text if completion is in chat format
+        if isinstance(completion, str):
+            pred = completion
+        elif isinstance(completion, list):
+            # [{"role":"assistant","content":"..."}]
+            pred = completion[-1]["content"]
+        elif isinstance(completion, dict):
+            pred = completion.get("content", completion.get("text", ""))
+        else:
+            pred = str(completion)
+
+        rewards.append(compute_reward(pred, gt))
 
     return rewards
 

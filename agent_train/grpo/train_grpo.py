@@ -61,13 +61,13 @@ def train(config: Config, checkpoint: str | None = None):
         return rewards
 
     config = GRPOConfig(
-        output_dir="/kaggle/working/Hierarchical-RL-Agents-for-Legal-Contract-Analysis/agent_train/outputs/grpo_model/config",
-        learning_rate=5e-6,
-        per_device_train_batch_size=4,
-        gradient_accumulation_steps=8,
-        num_generations=4,
-        logging_steps=10,
-        save_steps=200,
+        output_dir= os.path.join(ROOT, config.data['output_path']),
+        learning_rate= float(config.model['grpo_learning_rate']),
+        per_device_train_batch_size= config.model['grpo_per_device_train_batch_size'],
+        gradient_accumulation_steps= config.model['grpo_gradient_accumulation_steps'],
+        num_generations= config.model['grpo_num_generations'],
+        logging_steps= config.model['grpo_logging_steps'],
+        save_steps= config.model['grpo_save_steps'],
     )
 
     trainer = GRPOTrainer(

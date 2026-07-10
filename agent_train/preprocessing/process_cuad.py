@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-INPUT_FILE = "/home/husammm/Desktop/courses/cs_courses/RL/projects/Hierarchical_RL_Agents_for_Legal_Contract_Analysis/agent_train/assets/CUAD/CUAD_v1.json"
-OUTPUT_DIR = Path("/home/husammm/Desktop/courses/cs_courses/RL/projects/Hierarchical_RL_Agents_for_Legal_Contract_Analysis/agent_train/outputs")
+INPUT_FILE = "/kaggle/input/datasets/konradb/atticus-open-contract-dataset-aok-beta/CUAD_v1/CUAD_v1.json"
+OUTPUT_DIR = Path("/kaggle/working/Hierarchical-RL-Agents-for-Legal-Contract-Analysis/agent_train/outputs")
 
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 

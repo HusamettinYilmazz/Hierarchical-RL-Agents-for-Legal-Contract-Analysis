@@ -52,7 +52,7 @@ def process_data(config: Config, output_dir):
         for item in train:
             f.write(json.dumps(item) + "\n")
 
-    with open(os.path.join(output_dir, "train.jsonl"), "w") as f:
+    with open(os.path.join(output_dir, "val.jsonl"), "w") as f:
         for item in val:
             f.write(json.dumps(item) + "\n")
 

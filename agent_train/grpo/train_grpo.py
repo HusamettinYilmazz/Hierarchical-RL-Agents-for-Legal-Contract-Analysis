@@ -69,7 +69,7 @@ def train(config: Config, checkpoint: str | None = None):
 
         return rewards
 
-    config = GRPOConfig(
+    grpo_config = GRPOConfig(
         output_dir= os.path.join(ROOT, config.data['output_path']),
         learning_rate= float(config.training['grpo_learning_rate']),
         per_device_train_batch_size= config.training['grpo_per_device_train_batch_size'],
@@ -83,7 +83,7 @@ def train(config: Config, checkpoint: str | None = None):
         model=model,
         reward_funcs=reward_func,
         train_dataset=dataset,
-        args=config
+        args=grpo_config
     )
 
     trainer.train(

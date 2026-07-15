@@ -16,7 +16,8 @@ data:
 model:
   base_model_name: "Qwen/Qwen2.5-0.5B-Instruct"
   sft_model_path: "/kaggle/input/models/husamsha/checkpoint-2614/pytorch/default/1/checkpoint-2614"
-
+  inference_model: "/home/husammm/Desktop/courses/cs_courses/RL/projects/Hierarchical_RL_Agents_for_Legal_Contract_Analysis/agent_train/outputs/grpo_model/"
+  
 
 training:
   lora_r: 8

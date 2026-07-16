@@ -5,6 +5,9 @@ from dataclasses import dataclass
 import tempfile
 import math
 
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+from peft import PeftModel
+
 from temporalio import activity
 import pymupdf4llm
 import fitz
@@ -23,10 +26,15 @@ AWS_S3_ENDPOINT_URL=os.environ['AWS_S3_ENDPOINT_URL']
 S3_BUCKET=os.environ['S3_BUCKET']
 TEMP_DIR=os.environ['TEMP_DIR']
 
-OPENROUTER_API_KEKY=os.environ['OPENROUTER_API_KEKY']
+OPENROUTER_API_KEY=os.environ['OPENROUTER_API_KEY']
 OPENROUTER_MODEL=os.environ['OPENROUTER_MODEL']
 OPENROUTER_BASE_URL=os.environ['OPENROUTER_BASE_URL']
 MAX_TOKENS=os.environ['MAX_TOKENS']
+
+USE_LOCAL_MODEL=os.environ['USE_LOCAL_MODEL']
+LOCAL_BASE_MODEL=os.environ['LOCAL_BASE_MODEL']
+LOCAL_ADAPTER_PATH=os.environ['LOCAL_ADAPTER_PATH']
+
 
 @dataclass
 class DownloadPdfInput:
@@ -184,21 +192,47 @@ async def call_llm(params: CallLLMInput) -> CallLLMOutput:
             "prompt_chars": len(params.prompt),
         })
     
-    llm_client = OpenAI(
-        api_key=OPENROUTER_API_KEKY,
-        base_url=OPENROUTER_BASE_URL,
-    )
+    if USE_LOCAL_MODEL:
+        tokenizer = AutoTokenizer.from_pretrained(LOCAL_BASE_MODEL)
+        base_model = AutoModelForCausalLM.from_pretrained(
+            LOCAL_BASE_MODEL,
+            device_map="auto",
+            trust_remote_code=True,
+        )
 
-    response = llm_client.chat.completions.create(
-        model= OPENROUTER_MODEL,
-        messages=[{
-            "role": "user",
-            "content": params.prompt
-            }],
-        max_tokens=int(MAX_TOKENS),
-    )
+        model = PeftModel.from_pretrained(
+            base_model,
+            LOCAL_ADAPTER_PATH,
+        )
 
-    content = response.choices[0].message.content
+        llm_pipeline = pipeline(
+            "text-generation",
+            model=model,
+            tokenizer=tokenizer,
+            max_length=int(MAX_TOKENS),
+            temperature=0.1,
+            top_p=0.9,
+            repetition_penalty=1.2,
+        )
+
+        response = llm_pipeline(params.prompt, return_full_text=False)[0]
+        content = response['generated_text']
+    else:
+        llm_client = OpenAI(
+            api_key=OPENROUTER_API_KEY,
+            base_url=OPENROUTER_BASE_URL,
+        )
+
+        response = llm_client.chat.completions.create(
+            model= OPENROUTER_MODEL,
+            messages=[{
+                "role": "user",
+                "content": params.prompt
+                }],
+            max_tokens=int(MAX_TOKENS),
+        )
+
+        content = response.choices[0].message.content
 
     return CallLLMOutput(content=content)
     

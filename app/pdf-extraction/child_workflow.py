@@ -62,8 +62,8 @@ class SummarizePDF:
             call_llm,
             CallLLMInput(prompt=prompt),
             retry_policy=DEFAULT_RETRY_POLICY,
-            start_to_close_timeout=timedelta(minutes=5),
-            heartbeat_timeout=timedelta(minutes=2),
+            start_to_close_timeout=timedelta(minutes=20),
+            heartbeat_timeout=timedelta(minutes=5),
         )
 
         parsed_output = json_repair.loads(llm_response.content)

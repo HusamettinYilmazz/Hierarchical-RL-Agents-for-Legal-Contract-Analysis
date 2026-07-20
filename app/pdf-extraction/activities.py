@@ -204,6 +204,9 @@ async def call_llm(params: CallLLMInput) -> CallLLMOutput:
             base_model,
             LOCAL_ADAPTER_PATH,
         )
+        model = model.merge_and_unload()
+        model.eval()
+        model.config.use_cache = True
 
         llm_pipeline = pipeline(
             "text-generation",

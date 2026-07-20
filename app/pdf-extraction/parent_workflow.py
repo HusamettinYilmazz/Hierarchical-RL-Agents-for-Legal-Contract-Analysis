@@ -146,8 +146,8 @@ class ContractReviewWorkflow:
         llm_result = await workflow.execute_activity(
             call_llm,
             CallLLMInput(prompt=llm_prompt),
-            start_to_close_timeout=timedelta(minutes=4),
-            heartbeat_timeout=timedelta(minutes=3),
+            start_to_close_timeout=timedelta(minutes=40),
+            heartbeat_timeout=timedelta(minutes=20),
             retry_policy=DEFAULT_RETRY_POLICY,
         )
 

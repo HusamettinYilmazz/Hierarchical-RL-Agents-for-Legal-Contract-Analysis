@@ -254,9 +254,15 @@ curl -X POST http://localhost:5000/contract-review/start \
 curl -X POST http://localhost:5000/contract-review/start \
     -H "Content-Type: application/json" \
     -d '{
-    "s3_file_paths": ["s3://temporal-dev/legal_documents/nda-innovate-consultpro.pdf",
-         "s3://temporal-dev/legal_documents/software-license-globalsoft.pdf",
-         "s3://temporal-dev/legal_documents/vendor-service-agreement.pdf"
+    "s3_file_paths": ["s3://temporal-dev/cuad/CreditcardscomInc_20070810_S-1_EX-10.33_362297_EX-10.33_Affiliate Agreement.pdf",
+         "s3://temporal-dev/cuad/CybergyHoldingsInc_20140520_10-Q_EX-10.27_8605784_EX-10.27_Affiliate Agreement.pdf",
+         "s3://temporal-dev/cuad/LinkPlusCorp_20050802_8-K_EX-10_3240252_EX-10_Affiliate Agreement.pdf"
+        ]
+    }'    
+ 
+    
+curl -X POST http://localhost:5000/contract-review/start     -H "Content-Type: application/json"     -d '{
+    "s3_file_paths": ["s3://temporal-dev/cuad/LinkPlusCorp_20050802_8-K_EX-10_3240252_EX-10_Affiliate Agreement.pdf"
         ]
     }'    
  

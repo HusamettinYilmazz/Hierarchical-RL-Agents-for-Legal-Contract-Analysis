@@ -6,7 +6,7 @@ Watch a short walkthrough of the system in action:
 
 <video controls width="100%" preload="metadata">
   <source src="assets/readme_demo/demo.mp4" type="video/x-matroska">
-  Your browser does not support embedded video! You can download it here: [demo.mkv](assets/readme/demo.mp4)
+  Your browser does not support embedded video! You can download it here: [demo.mp4](assets/readme/demo.mp4)
 </video>
 
 This repository contains a full-stack workflow for legal contract analysis using large language models. It combines:

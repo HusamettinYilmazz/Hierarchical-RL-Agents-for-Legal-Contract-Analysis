@@ -6,6 +6,10 @@ Watch a short walkthrough of the system in action:
 
 
 
+https://github.com/user-attachments/assets/79107963-16e9-4827-ba02-ce0ef87cabb3
+
+
+
 This repository contains a full-stack workflow for legal contract analysis using large language models. It combines:
 
 - a training pipeline for contract extraction and analysis using supervised fine-tuning (SFT) and GRPO,
